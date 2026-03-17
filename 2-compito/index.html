@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verifica di analisi logica – modalità verifica</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --line: #d1d5db;
+      --accent: #1d4ed8;
+      --accent-2: #2563eb;
+      --ok: #15803d;
+      --warn: #b45309;
+      --bad: #b91c1c;
+      --soft: #eef2ff;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    .app {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: white;
+      border-radius: 18px;
+      padding: 18px 20px;
+      margin-bottom: 18px;
+      box-shadow: 0 10px 30px rgba(37, 99, 235, 0.18);
+    }
+
+    .header h1 {
+      margin: 0 0 6px;
+      font-size: 30px;
+    }
+
+    .header p {
+      margin: 0;
+      line-height: 1.5;
+      opacity: 0.95;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .box, .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+    }
+
+    .box {
+      padding: 14px 16px;
+    }
+
+    .box label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .box input {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      font-size: 16px;
+    }
+
+    .status {
+      display: grid;
+      gap: 8px;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+
+    .timer {
+      font-size: 28px;
+      font-weight: bold;
+      color: var(--accent);
+      margin-top: 4px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .panel {
+      padding: 18px;
+    }
+
+    .panel h2 {
+      margin: 0 0 14px;
+      font-size: 22px;
+    }
+
+    .period-index {
+      display: inline-block;
+      background: var(--accent);
+      color: white;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    .period-box {
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+      min-height: 180px;
+      font-size: 22px;
+      line-height: 1.75;
+    }
+
+    .fields {
+      display: grid;
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      padding: 10px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: #fcfcfd;
+    }
+
+    .field label {
+      font-weight: bold;
+      font-size: 15px;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      font-size: 16px;
+    }
+
+    .field small {
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .primary { background: var(--accent); color: white; }
+    .secondary { background: #e5e7eb; color: #111827; }
+    .success { background: var(--ok); color: white; }
+    .danger { background: var(--bad); color: white; }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .note {
+      margin-top: 12px;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .feedback, .final-result {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      line-height: 1.6;
+    }
+
+    .feedback { white-space: normal; }
+
+    .good { color: var(--ok); font-weight: bold; }
+    .partial { color: var(--warn); font-weight: bold; }
+    .bad { color: var(--bad); font-weight: bold; }
+
+    .hidden { display: none; }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .mini-card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: white;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .locked-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.72);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 9999;
+    }
+
+    .locked-card {
+      background: white;
+      border-radius: 18px;
+      padding: 24px;
+      max-width: 520px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+    }
+
+    .locked-card h3 { margin-top: 0; }
+
+    @media (max-width: 980px) {
+      .topbar, .layout {
+        grid-template-columns: 1fr;
+      }
+      .period-box {
+        min-height: 140px;
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <h1>Verifica di analisi logica</h1>
+      <p>50 frasi per il primo superiore. I complementi compaiono in ordine casuale a ogni periodo. La correzione è robusta, tollera piccole differenze formali e gestisce anche risposte multiple quando servono.</p>
+    </div>
+
+    <div class="topbar">
+      <div class="box">
+        <label for="studentName">Nome e cognome dello studente</label>
+        <input id="studentName" type="text" placeholder="Inserisci nome e cognome" />
+      </div>
+      <div class="box status">
+        <div><strong>Periodo corrente:</strong> <span id="progressText">1 / 50</span></div>
+        <div><strong>Periodi compilati:</strong> <span id="completedText">0</span></div>
+        <div><strong>Modalità verifica:</strong> <span id="modeText">non attiva</span></div>
+      </div>
+      <div class="box status">
+        <div><strong>Tempo rimanente</strong></div>
+        <div class="timer" id="timerText">--:--</div>
+        <div id="timerNote">Premi “Avvia verifica” per attivare il timer da 45 minuti.</div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <section class="panel">
+        <h2>Complementi da individuare</h2>
+        <div class="fields" id="fields"></div>
+        <div class="buttons">
+          <button class="secondary" id="prevBtn">◀ Precedente</button>
+          <button class="primary" id="saveNextBtn">Salva e vai al successivo ▶</button>
+          <button class="secondary" id="clearBtn">Pulisci questo periodo</button>
+          <button class="danger" id="startExamBtn">Avvia verifica</button>
+          <button class="success" id="finishBtn">Consegna e correggi</button>
+          <button class="secondary" id="downloadBtn" disabled>Scarica file TXT</button>
+        </div>
+        <div class="note">
+          Scrivi più risposte nello stesso campo separandole con una virgola oppure con il punto e virgola. Se il complemento non è presente, lascia il campo vuoto. In modalità verifica, il timer parte da 45 minuti e la consegna finale può avvenire anche automaticamente allo scadere del tempo.
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Periodo</h2>
+        <div class="period-index" id="periodIndex">Periodo 1 di 50</div>
+        <div class="period-box" id="periodText"></div>
+        <div class="feedback" id="periodFeedback">La correzione del singolo periodo comparirà qui dopo la consegna.</div>
+        <div class="final-result hidden" id="finalResult"></div>
+      </section>
+    </div>
+  </div>
+
+  <div class="locked-overlay" id="lockedOverlay">
+    <div class="locked-card">
+      <h3>Modalità verifica attiva</h3>
+      <p>La verifica è stata avviata. Il timer è partito. Se provi a uscire dalla finestra o a cambiare scheda, l'app registra l'evento nel file finale.</p>
+      <button class="primary" id="closeOverlayBtn">Ho capito</button>
+    </div>
+  </div>
+
+  <script>
+    const BASE_LABELS = [
+      { key: 'soggetto', label: 'Soggetto' },
+      { key: 'oggetto', label: 'Complemento oggetto' },
+      { key: 'specificazione', label: 'Complemento di specificazione' },
+      { key: 'termine', label: 'Complemento di termine' },
+      { key: 'tempo', label: 'Complemento di tempo' },
+      { key: 'luogo', label: 'Complemento di luogo' },
+      { key: 'materia', label: 'Complemento di materia' }
+    ];
+
+    const PERIODS = [
+      { text: 'Marco legge il libro di storia in biblioteca oggi.', answers: { soggetto:['Marco'], oggetto:['il libro'], specificazione:['di storia'], termine:[], tempo:['oggi'], luogo:['in biblioteca'], materia:[] } },
+      { text: 'La bottiglia di vetro è sul tavolo della cucina da ieri.', answers: { soggetto:['La bottiglia'], oggetto:[], specificazione:['della cucina'], termine:[], tempo:['da ieri'], luogo:['sul tavolo'], materia:['di vetro'] } },
+      { text: 'Anna consegna il quaderno di matematica al professore stamattina in classe.', answers: { soggetto:['Anna'], oggetto:['il quaderno'], specificazione:['di matematica'], termine:['al professore'], tempo:['stamattina'], luogo:['in classe'], materia:[] } },
+      { text: 'Il banco di legno occupa molto spazio nell’aula.', answers: { soggetto:['Il banco'], oggetto:['molto spazio'], specificazione:[], termine:[], tempo:[], luogo:['nell’aula','in aula'], materia:['di legno'] } },
+      { text: 'Gli alunni della prima aspettano il pullman davanti alla scuola alle otto.', answers: { soggetto:['Gli alunni'], oggetto:['il pullman'], specificazione:['della prima'], termine:[], tempo:['alle otto'], luogo:['davanti alla scuola'], materia:[] } },
+      { text: 'Sara ha regalato una collana d’argento alla zia ieri sera.', answers: { soggetto:['Sara'], oggetto:['una collana'], specificazione:[], termine:['alla zia'], tempo:['ieri sera'], luogo:[], materia:['d’argento','di argento'] } },
+      { text: 'Il professore racconta storie della guerra agli studenti durante la lezione.', answers: { soggetto:['Il professore'], oggetto:['storie'], specificazione:['della guerra'], termine:['agli studenti'], tempo:['durante la lezione'], luogo:[], materia:[] } },
+      { text: 'Le chiavi della macchina sono nel cassetto della scrivania da stamattina.', answers: { soggetto:['Le chiavi'], oggetto:[], specificazione:['della macchina','della scrivania'], termine:[], tempo:['da stamattina'], luogo:['nel cassetto'], materia:[] } },
+      { text: 'Paolo scrive una lettera di auguri a sua sorella da Roma oggi.', answers: { soggetto:['Paolo'], oggetto:['una lettera'], specificazione:['di auguri'], termine:['a sua sorella'], tempo:['oggi'], luogo:['da Roma'], materia:[] } },
+      { text: 'La sedia di plastica è accanto alla finestra della camera.', answers: { soggetto:['La sedia'], oggetto:[], specificazione:['della camera'], termine:[], tempo:[], luogo:['accanto alla finestra'], materia:['di plastica'] } },
+      { text: 'Marta mostra il disegno dei bambini ai genitori in aula ieri pomeriggio.', answers: { soggetto:['Marta'], oggetto:['il disegno'], specificazione:['dei bambini'], termine:['ai genitori'], tempo:['ieri pomeriggio'], luogo:['in aula'], materia:[] } },
+      { text: 'Il bracciale d’oro della nonna era nel cassetto della camera.', answers: { soggetto:['Il bracciale'], oggetto:[], specificazione:['della nonna','della camera'], termine:[], tempo:[], luogo:['nel cassetto'], materia:['d’oro','di oro'] } },
+      { text: 'Luca prepara la ricerca di geografia per la classe questa sera a casa.', answers: { soggetto:['Luca'], oggetto:['la ricerca'], specificazione:['di geografia'], termine:['per la classe'], tempo:['questa sera'], luogo:['a casa'], materia:[] } },
+      { text: 'Il vaso di ceramica è vicino alla porta del salotto.', answers: { soggetto:['Il vaso'], oggetto:[], specificazione:['del salotto'], termine:[], tempo:[], luogo:['vicino alla porta'], materia:['di ceramica'] } },
+      { text: 'I compagni di Marco prestano il dizionario a Giulia durante l’intervallo.', answers: { soggetto:['I compagni'], oggetto:['il dizionario'], specificazione:['di Marco'], termine:['a Giulia'], tempo:['durante l’intervallo'], luogo:[], materia:[] } },
+      { text: 'La maestra di musica ascolta il coro degli alunni in palestra oggi.', answers: { soggetto:['La maestra'], oggetto:['il coro'], specificazione:['di musica','degli alunni'], termine:[], tempo:['oggi'], luogo:['in palestra'], materia:[] } },
+      { text: 'Francesco porta una bottiglia di acqua alla nonna nel pomeriggio.', answers: { soggetto:['Francesco'], oggetto:['una bottiglia'], specificazione:['di acqua'], termine:['alla nonna'], tempo:['nel pomeriggio'], luogo:[], materia:[] } },
+      { text: 'La porta di ferro del cortile era aperta da ore.', answers: { soggetto:['La porta'], oggetto:[], specificazione:['del cortile'], termine:[], tempo:['da ore'], luogo:[], materia:['di ferro'] } },
+      { text: 'Gli studenti leggono il capitolo di grammatica in classe questa mattina.', answers: { soggetto:['Gli studenti'], oggetto:['il capitolo'], specificazione:['di grammatica'], termine:[], tempo:['questa mattina'], luogo:['in classe'], materia:[] } },
+      { text: 'Elena manda un messaggio di saluto alla cugina da Milano ieri.', answers: { soggetto:['Elena'], oggetto:['un messaggio'], specificazione:['di saluto'], termine:['alla cugina'], tempo:['ieri'], luogo:['da Milano'], materia:[] } },
+      { text: 'Il tavolo di marmo è al centro del soggiorno da anni.', answers: { soggetto:['Il tavolo'], oggetto:[], specificazione:['del soggiorno'], termine:[], tempo:['da anni'], luogo:['al centro'], materia:['di marmo'] } },
+      { text: 'Mio fratello offre il succo di frutta agli ospiti durante la festa.', answers: { soggetto:['Mio fratello'], oggetto:['il succo'], specificazione:['di frutta'], termine:['agli ospiti'], tempo:['durante la festa'], luogo:[], materia:[] } },
+      { text: 'Il quaderno di scienze è nello zaino di Luca da stamattina.', answers: { soggetto:['Il quaderno'], oggetto:[], specificazione:['di scienze','di Luca'], termine:[], tempo:['da stamattina'], luogo:['nello zaino'], materia:[] } },
+      { text: 'La classe visita il museo di storia con la guida oggi.', answers: { soggetto:['La classe'], oggetto:['il museo'], specificazione:['di storia'], termine:[], tempo:['oggi'], luogo:[], materia:[] } },
+      { text: 'Chiara spedisce una cartolina di Roma agli amici in estate.', answers: { soggetto:['Chiara'], oggetto:['una cartolina'], specificazione:['di Roma'], termine:['agli amici'], tempo:['in estate'], luogo:[], materia:[] } },
+      { text: 'Il bicchiere di plastica è sotto il banco della cucina.', answers: { soggetto:['Il bicchiere'], oggetto:[], specificazione:['della cucina'], termine:[], tempo:[], luogo:['sotto il banco'], materia:['di plastica'] } },
+      { text: 'Gli insegnanti della scuola spiegano il regolamento agli alunni a settembre.', answers: { soggetto:['Gli insegnanti'], oggetto:['il regolamento'], specificazione:['della scuola'], termine:['agli alunni'], tempo:['a settembre'], luogo:[], materia:[] } },
+      { text: 'La coperta di lana era sul letto della nonna ieri sera.', answers: { soggetto:['La coperta'], oggetto:[], specificazione:['della nonna'], termine:[], tempo:['ieri sera'], luogo:['sul letto'], materia:['di lana'] } },
+      { text: 'Davide racconta una storia di paura ai compagni durante il viaggio.', answers: { soggetto:['Davide'], oggetto:['una storia'], specificazione:['di paura'], termine:['ai compagni'], tempo:['durante il viaggio'], luogo:[], materia:[] } },
+      { text: 'La lampada di metallo illumina la stanza della sorella ogni sera.', answers: { soggetto:['La lampada'], oggetto:['la stanza'], specificazione:['della sorella'], termine:[], tempo:['ogni sera'], luogo:[], materia:['di metallo'] } },
+      { text: 'I ragazzi del quartiere portano il pallone al campo nel pomeriggio.', answers: { soggetto:['I ragazzi'], oggetto:['il pallone'], specificazione:['del quartiere'], termine:['al campo'], tempo:['nel pomeriggio'], luogo:[], materia:[] } },
+      { text: 'La tazza di porcellana è sopra la mensola della cucina.', answers: { soggetto:['La tazza'], oggetto:[], specificazione:['della cucina'], termine:[], tempo:[], luogo:['sopra la mensola'], materia:['di porcellana'] } },
+      { text: 'Giulia mostra la fotografia del viaggio alla maestra oggi.', answers: { soggetto:['Giulia'], oggetto:['la fotografia'], specificazione:['del viaggio'], termine:['alla maestra'], tempo:['oggi'], luogo:[], materia:[] } },
+      { text: 'Il portone di legno della villa era chiuso da ieri.', answers: { soggetto:['Il portone'], oggetto:[], specificazione:['della villa'], termine:[], tempo:['da ieri'], luogo:[], materia:['di legno'] } },
+      { text: 'Marta legge la poesia di Foscolo alla classe questa mattina.', answers: { soggetto:['Marta'], oggetto:['la poesia'], specificazione:['di Foscolo'], termine:['alla classe'], tempo:['questa mattina'], luogo:[], materia:[] } },
+      { text: 'Il tappeto di lana è davanti al camino del salotto.', answers: { soggetto:['Il tappeto'], oggetto:[], specificazione:['del salotto'], termine:[], tempo:[], luogo:['davanti al camino'], materia:['di lana'] } },
+      { text: 'Gli amici di Paolo mandano gli auguri al nonno per il compleanno oggi.', answers: { soggetto:['Gli amici'], oggetto:['gli auguri'], specificazione:['di Paolo','per il compleanno'], termine:['al nonno'], tempo:['oggi'], luogo:[], materia:[] } },
+      { text: 'La finestra di vetro della cucina era aperta tutta la notte.', answers: { soggetto:['La finestra'], oggetto:[], specificazione:['della cucina'], termine:[], tempo:['tutta la notte'], luogo:[], materia:['di vetro'] } },
+      { text: 'Il professore di storia assegna il compito agli studenti per domani.', answers: { soggetto:['Il professore'], oggetto:['il compito'], specificazione:['di storia'], termine:['agli studenti'], tempo:['per domani'], luogo:[], materia:[] } },
+      { text: 'La borsa di cuoio è accanto al letto della zia.', answers: { soggetto:['La borsa'], oggetto:[], specificazione:['del letto','della zia'], termine:[], tempo:[], luogo:['accanto al letto'], materia:['di cuoio'] } },
+      { text: 'Lorenzo porta il dizionario di latino all’amico in biblioteca oggi.', answers: { soggetto:['Lorenzo'], oggetto:['il dizionario'], specificazione:['di latino'], termine:['all’amico'], tempo:['oggi'], luogo:['in biblioteca'], materia:[] } },
+      { text: 'Il piatto di ceramica della nonna era sul tavolo ieri.', answers: { soggetto:['Il piatto'], oggetto:[], specificazione:['della nonna'], termine:[], tempo:['ieri'], luogo:['sul tavolo'], materia:['di ceramica'] } },
+      { text: 'La sorella di Luca prepara la torta di mele per gli ospiti questa sera.', answers: { soggetto:['La sorella'], oggetto:['la torta'], specificazione:['di Luca','di mele'], termine:['per gli ospiti'], tempo:['questa sera'], luogo:[], materia:[] } },
+      { text: 'Il vaso di cristallo è vicino al quadro del corridoio.', answers: { soggetto:['Il vaso'], oggetto:[], specificazione:['del corridoio'], termine:[], tempo:[], luogo:['vicino al quadro'], materia:['di cristallo'] } },
+      { text: 'Gli alunni della classe consegnano il lavoro al professore alle undici.', answers: { soggetto:['Gli alunni'], oggetto:['il lavoro'], specificazione:['della classe'], termine:['al professore'], tempo:['alle undici'], luogo:[], materia:[] } },
+      { text: 'La porta di ferro è davanti al giardino della scuola.', answers: { soggetto:['La porta'], oggetto:[], specificazione:['della scuola'], termine:[], tempo:[], luogo:['davanti al giardino'], materia:['di ferro'] } },
+      { text: 'Maria invia una mail di ringraziamento alla docente nel pomeriggio.', answers: { soggetto:['Maria'], oggetto:['una mail'], specificazione:['di ringraziamento'], termine:['alla docente'], tempo:['nel pomeriggio'], luogo:[], materia:[] } },
+      { text: 'Il cappotto di lana era sulla sedia della camera da letto.', answers: { soggetto:['Il cappotto'], oggetto:[], specificazione:['della camera da letto'], termine:[], tempo:[], luogo:['sulla sedia'], materia:['di lana'] } },
+      { text: 'I ragazzi di terza portano il materiale di scienze al laboratorio oggi.', answers: { soggetto:['I ragazzi'], oggetto:['il materiale'], specificazione:['di terza','di scienze'], termine:['al laboratorio'], tempo:['oggi'], luogo:[], materia:[] } },
+      { text: 'La scatola di cartone è sotto il letto della sorella da ieri sera.', answers: { soggetto:['La scatola'], oggetto:[], specificazione:['del letto','della sorella'], termine:[], tempo:['da ieri sera'], luogo:['sotto il letto'], materia:['di cartone'] } },
+      { text: 'Paola mostra il progetto di arte ai compagni in aula oggi.', answers: { soggetto:['Paola'], oggetto:['il progetto'], specificazione:['di arte'], termine:['ai compagni'], tempo:['oggi'], luogo:['in aula'], materia:[] } }
+    ];
+
+    const state = {
+      current: 0,
+      responses: PERIODS.map(() => ({ soggetto:'', oggetto:'', specificazione:'', termine:'', tempo:'', luogo:'', materia:'' })),
+      fieldOrders: PERIODS.map(() => shuffle([...BASE_LABELS])),
+      corrections: null,
+      score: 0,
+      total: PERIODS.length * BASE_LABELS.length,
+      examStarted: false,
+      examFinished: false,
+      timerSeconds: 45 * 60,
+      timerId: null,
+      tabSwitches: 0,
+      blurEvents: 0,
+      startedAt: null,
+      deliveredAt: null,
+      autoDelivered: false
+    };
+
+    const fieldsWrap = document.getElementById('fields');
+    const periodText = document.getElementById('periodText');
+    const periodIndex = document.getElementById('periodIndex');
+    const progressText = document.getElementById('progressText');
+    const completedText = document.getElementById('completedText');
+    const modeText = document.getElementById('modeText');
+    const timerText = document.getElementById('timerText');
+    const timerNote = document.getElementById('timerNote');
+    const periodFeedback = document.getElementById('periodFeedback');
+    const finalResult = document.getElementById('finalResult');
+    const lockedOverlay = document.getElementById('lockedOverlay');
+
+    const prevBtn = document.getElementById('prevBtn');
+    const saveNextBtn = document.getElementById('saveNextBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const startExamBtn = document.getElementById('startExamBtn');
+    const finishBtn = document.getElementById('finishBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const closeOverlayBtn = document.getElementById('closeOverlayBtn');
+
+    function shuffle(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function getCurrentOrder() {
+      return state.fieldOrders[state.current];
+    }
+
+    function buildFields() {
+      fieldsWrap.innerHTML = '';
+      getCurrentOrder().forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'field';
+        div.innerHTML = `
+          <label for="${item.key}">${item.label}</label>
+          <input id="${item.key}" data-key="${item.key}" type="text" autocomplete="off" />
+          <small>Se ci sono più elementi dello stesso tipo, separali con una virgola o con un punto e virgola.</small>
+        `;
+        fieldsWrap.appendChild(div);
+      });
+    }
+
+    function normalize(str) {
+      return (str || '')
+        .toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[’']/g, "'")
+        .replace(/[.,:!?]/g, '')
+        .replace(/^\s*(il|lo|la|i|gli|le|un|uno|una)\s+/,'')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function splitAnswer(value) {
+      if (!value) return [];
+      return value
+        .split(/\s*[;,]\s*/)
+        .map(v => v.trim())
+        .filter(Boolean);
+    }
+
+    function unique(arr) {
+      return [...new Set(arr)];
+    }
+
+    function compareAnswers(userValue, acceptableValues) {
+      const userParts = unique(splitAnswer(userValue).map(normalize).filter(Boolean));
+      const goodParts = unique((acceptableValues || []).map(normalize).filter(Boolean));
+
+      if (goodParts.length === 0) {
+        return {
+          status: userParts.length === 0 ? 'correct' : 'wrong',
+          matchedCount: userParts.length === 0 ? 0 : 0,
+          expectedCount: 0
+        };
+      }
+
+      if (userParts.length === 0) {
+        return { status: 'wrong', matchedCount: 0, expectedCount: goodParts.length };
+      }
+
+      const matched = userParts.filter(part => goodParts.includes(part));
+      const matchedCount = unique(matched).length;
+
+      if (matchedCount === goodParts.length && userParts.length === goodParts.length) {
+        return { status: 'correct', matchedCount, expectedCount: goodParts.length };
+      }
+
+      if (matchedCount > 0) {
+        return { status: 'partial', matchedCount, expectedCount: goodParts.length };
+      }
+
+      return { status: 'wrong', matchedCount: 0, expectedCount: goodParts.length };
+    }
+
+    function saveCurrentInputs() {
+      BASE_LABELS.forEach(item => {
+        const input = document.getElementById(item.key);
+        if (input) {
+          state.responses[state.current][item.key] = input.value.trim();
+        }
+      });
+    }
+
+    function fillCurrentInputs() {
+      BASE_LABELS.forEach(item => {
+        const input = document.getElementById(item.key);
+        if (input) {
+          input.value = state.responses[state.current][item.key] || '';
+        }
+      });
+    }
+
+    function countCompleted() {
+      return state.responses.filter(r => Object.values(r).some(v => v.trim() !== '')).length;
+    }
+
+    function formatClock(seconds) {
+      const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+      const secs = Math.floor(seconds % 60).toString().padStart(2, '0');
+      return `${mins}:${secs}`;
+    }
+
+    function updateTopBar() {
+      progressText.textContent = `${state.current + 1} / ${PERIODS.length}`;
+      completedText.textContent = countCompleted();
+      modeText.textContent = state.examStarted ? (state.examFinished ? 'conclusa' : 'attiva') : 'non attiva';
+      timerText.textContent = formatClock(state.timerSeconds);
+      timerNote.textContent = state.examStarted
+        ? (state.examFinished ? 'La verifica è stata conclusa.' : 'Il timer è attivo.')
+        : 'Premi “Avvia verifica” per attivare il timer da 45 minuti.';
+    }
+
+    function loadCurrentPeriod() {
+      buildFields();
+      fillCurrentInputs();
+      const p = PERIODS[state.current];
+      periodText.textContent = p.text;
+      periodIndex.textContent = `Periodo ${state.current + 1} di ${PERIODS.length}`;
+      prevBtn.disabled = state.current === 0;
+      saveNextBtn.textContent = state.current === PERIODS.length - 1 ? 'Salva periodo' : 'Salva e vai al successivo ▶';
+      updateTopBar();
+
+      if (state.corrections) {
+        showPeriodFeedback();
+      } else {
+        periodFeedback.textContent = 'La correzione del singolo periodo comparirà qui dopo la consegna.';
+      }
+    }
+
+    function clearCurrentPeriod() {
+      BASE_LABELS.forEach(item => {
+        const input = document.getElementById(item.key);
+        if (input) input.value = '';
+      });
+      saveCurrentInputs();
+      updateTopBar();
+    }
+
+    function nextPeriod() {
+      saveCurrentInputs();
+      if (state.current < PERIODS.length - 1) {
+        state.current += 1;
+      }
+      loadCurrentPeriod();
+    }
+
+    function previousPeriod() {
+      saveCurrentInputs();
+      if (state.current > 0) {
+        state.current -= 1;
+      }
+      loadCurrentPeriod();
+    }
+
+    function statusLabel(status) {
+      if (status === 'correct') return '<span class="good">corretto</span>';
+      if (status === 'partial') return '<span class="partial">parzialmente corretto</span>';
+      return '<span class="bad">errato</span>';
+    }
+
+    function solutionText(values) {
+      return values && values.length ? values.join(' ; ') : '—';
+    }
+
+    function evaluateAll(auto = false) {
+      if (state.examFinished) return;
+      saveCurrentInputs();
+
+      let score = 0;
+      const corrections = [];
+
+      PERIODS.forEach((period, idx) => {
+        const row = {};
+        BASE_LABELS.forEach(item => {
+          const result = compareAnswers(state.responses[idx][item.key], period.answers[item.key]);
+          row[item.key] = result;
+          if (result.status === 'correct') score += 1;
+          if (result.status === 'partial') {
+            score += Math.min(0.5, 0.5 * (result.matchedCount / Math.max(1, result.expectedCount)) + 0.15);
+          }
+        });
+        corrections.push(row);
+      });
+
+      state.score = Number(score.toFixed(2));
+      state.corrections = corrections;
+      state.examFinished = true;
+      state.autoDelivered = auto;
+      state.deliveredAt = new Date().toLocaleString('it-IT');
+      if (state.timerId) {
+        clearInterval(state.timerId);
+        state.timerId = null;
+      }
+      downloadBtn.disabled = false;
+      startExamBtn.disabled = true;
+      showPeriodFeedback();
+      showFinalResult();
+      updateTopBar();
+    }
+
+    function showPeriodFeedback() {
+      if (!state.corrections) return;
+      const p = PERIODS[state.current];
+      const corr = state.corrections[state.current];
+      const order = getCurrentOrder();
+      let html = '';
+
+      order.forEach(item => {
+        const result = corr[item.key];
+        html += `<strong>${item.label}</strong><br>`;
+        html += `Risposta studente: ${state.responses[state.current][item.key] || '—'}<br>`;
+        html += `Soluzione attesa: ${solutionText(p.answers[item.key])}<br>`;
+        html += `Esito: ${statusLabel(result.status)}<br><br>`;
+      });
+
+      periodFeedback.innerHTML = html;
+    }
+
+    function buildMiniStats() {
+      let correct = 0, partial = 0, wrong = 0;
+      state.corrections.forEach(row => {
+        BASE_LABELS.forEach(item => {
+          if (row[item.key].status === 'correct') correct++;
+          else if (row[item.key].status === 'partial') partial++;
+          else wrong++;
+        });
+      });
+      return { correct, partial, wrong };
+    }
+
+    function showFinalResult() {
+      if (!state.corrections) return;
+      const percentage = Math.round((state.score / state.total) * 100);
+      const stats = buildMiniStats();
+      finalResult.classList.remove('hidden');
+      finalResult.innerHTML = `
+        <strong>Risultato finale</strong><br>
+        Punteggio: <strong>${state.score}</strong> su <strong>${state.total}</strong><br>
+        Percentuale: <strong>${percentage}%</strong><br>
+        Consegna: <strong>${state.autoDelivered ? 'automatica allo scadere del tempo' : 'manuale'}</strong><br>
+        Inizio verifica: <strong>${state.startedAt || 'non registrato'}</strong><br>
+        Fine verifica: <strong>${state.deliveredAt || 'non registrata'}</strong><br>
+        Cambi scheda registrati: <strong>${state.tabSwitches}</strong><br>
+        Uscite dalla finestra registrate: <strong>${state.blurEvents}</strong><br>
+        <div class="mini-grid">
+          <div class="mini-card"><span class="good">Corretti</span><br><strong>${stats.correct}</strong></div>
+          <div class="mini-card"><span class="partial">Parziali</span><br><strong>${stats.partial}</strong></div>
+          <div class="mini-card"><span class="bad">Errati</span><br><strong>${stats.wrong}</strong></div>
+          <div class="mini-card">Compilati<br><strong>${countCompleted()} / ${PERIODS.length}</strong></div>
+        </div>
+      `;
+    }
+
+    function startExam() {
+      if (state.examStarted || state.examFinished) return;
+      state.examStarted = true;
+      state.startedAt = new Date().toLocaleString('it-IT');
+      startExamBtn.disabled = true;
+      lockedOverlay.style.display = 'flex';
+      updateTopBar();
+      state.timerId = setInterval(() => {
+        state.timerSeconds -= 1;
+        updateTopBar();
+        if (state.timerSeconds <= 0) {
+          state.timerSeconds = 0;
+          updateTopBar();
+          evaluateAll(true);
+        }
+      }, 1000);
+    }
+
+    function generateTxt() {
+      if (!state.corrections) return;
+      const student = document.getElementById('studentName').value.trim() || 'Studente_non_indicato';
+      const percentage = Math.round((state.score / state.total) * 100);
+      let txt = '';
+      txt += 'VERIFICA DI ANALISI LOGICA\n';
+      txt += '==========================\n\n';
+      txt += `Studente: ${student}\n`;
+      txt += `Periodo totale: ${PERIODS.length}\n`;
+      txt += `Punteggio: ${state.score} / ${state.total}\n`;
+      txt += `Percentuale: ${percentage}%\n`;
+      txt += `Modalità verifica attivata: ${state.examStarted ? 'sì' : 'no'}\n`;
+      txt += `Inizio verifica: ${state.startedAt || 'non registrato'}\n`;
+      txt += `Consegna: ${state.deliveredAt || 'non registrata'}\n`;
+      txt += `Consegna automatica: ${state.autoDelivered ? 'sì' : 'no'}\n`;
+      txt += `Cambi scheda registrati: ${state.tabSwitches}\n`;
+      txt += `Uscite dalla finestra registrate: ${state.blurEvents}\n\n`;
+
+      PERIODS.forEach((period, idx) => {
+        txt += `Periodo ${idx + 1}: ${period.text}\n`;
+        BASE_LABELS.forEach(item => {
+          const result = state.corrections[idx][item.key];
+          txt += `- ${item.label}\n`;
+          txt += `  Risposta studente: ${state.responses[idx][item.key] || '—'}\n`;
+          txt += `  Soluzione attesa: ${solutionText(period.answers[item.key])}\n`;
+          txt += `  Esito: ${result.status}\n`;
+        });
+        txt += '\n';
+      });
+
+      const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `verifica_analisi_logica_${student.replace(/\s+/g, '_')}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (state.examStarted && !state.examFinished && document.hidden) {
+        state.tabSwitches += 1;
+      }
+    });
+
+    window.addEventListener('blur', () => {
+      if (state.examStarted && !state.examFinished) {
+        state.blurEvents += 1;
+      }
+    });
+
+    window.addEventListener('beforeunload', (e) => {
+      if (state.examStarted && !state.examFinished) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+
+    prevBtn.addEventListener('click', previousPeriod);
+    saveNextBtn.addEventListener('click', nextPeriod);
+    clearBtn.addEventListener('click', clearCurrentPeriod);
+    startExamBtn.addEventListener('click', startExam);
+    finishBtn.addEventListener('click', () => evaluateAll(false));
+    downloadBtn.addEventListener('click', generateTxt);
+    closeOverlayBtn.addEventListener('click', () => { lockedOverlay.style.display = 'none'; });
+
+    loadCurrentPeriod();
+    updateTopBar();
+  </script>
+</body>
+</html>

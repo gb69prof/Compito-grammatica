@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verifica di analisi logica</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --line: #d1d5db;
+      --accent: #2563eb;
+      --ok: #15803d;
+      --bad: #b91c1c;
+      --warn: #b45309;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-bottom: 18px;
+      line-height: 1.5;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .student-box, .summary-box, .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+    }
+
+    .student-box {
+      padding: 14px;
+    }
+
+    .student-box input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      margin-top: 8px;
+      font-size: 16px;
+    }
+
+    .summary-box {
+      padding: 14px 18px;
+      min-width: 240px;
+      text-align: right;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .panel {
+      padding: 18px;
+    }
+
+    .panel h2 {
+      margin-top: 0;
+      font-size: 22px;
+    }
+
+    .period-box {
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 21px;
+      line-height: 1.7;
+      min-height: 170px;
+    }
+
+    .period-index {
+      display: inline-block;
+      font-size: 14px;
+      color: white;
+      background: var(--accent);
+      padding: 6px 10px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+    }
+
+    .fields {
+      display: grid;
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field label {
+      font-weight: bold;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      font-size: 16px;
+    }
+
+    .field small {
+      color: var(--muted);
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 15px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .primary { background: var(--accent); color: white; }
+    .secondary { background: #e5e7eb; color: #111827; }
+    .success { background: var(--ok); color: white; }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .feedback {
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .good { color: var(--ok); font-weight: bold; }
+    .bad { color: var(--bad); font-weight: bold; }
+    .partial { color: var(--warn); font-weight: bold; }
+
+    .legend {
+      margin-top: 12px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .final-result {
+      margin-top: 22px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+      line-height: 1.65;
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .topbar {
+        grid-template-columns: 1fr;
+      }
+      .summary-box {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>Verifica di analisi logica</h1>
+    <div class="subtitle">
+      Compila i campi con gli elementi presenti nel periodo. Se un complemento non è presente, lascia il campo vuoto.
+      L'app corregge in modo rigoroso ma tollera differenze minime di maiuscole, apostrofi, articoli iniziali e spazi.
+    </div>
+
+    <div class="topbar">
+      <div class="student-box">
+        <label for="studentName"><strong>Nome e cognome dello studente</strong></label>
+        <input id="studentName" type="text" placeholder="Inserisci nome e cognome" />
+      </div>
+      <div class="summary-box" id="summaryBox">
+        Periodo <strong>1</strong> di <strong>10</strong><br>
+        Risposte salvate: <strong id="savedCount">0</strong>
+      </div>
+    </div>
+
+    <div class="layout">
+      <section class="panel">
+        <h2>Complementi da individuare</h2>
+        <div class="fields" id="fields"></div>
+        <div class="buttons">
+          <button class="secondary" id="prevBtn">◀ Precedente</button>
+          <button class="primary" id="saveNextBtn">Salva e vai al successivo ▶</button>
+          <button class="secondary" id="clearBtn">Pulisci questo periodo</button>
+          <button class="success" id="finishBtn">Correggi il compito</button>
+          <button class="secondary" id="downloadBtn" disabled>Scarica file TXT</button>
+        </div>
+        <div class="legend">
+          Correzione: <span class="good">corretto</span> · <span class="partial">parzialmente corretto</span> · <span class="bad">errato</span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Periodo</h2>
+        <div class="period-index" id="periodIndex">Periodo 1 di 10</div>
+        <div class="period-box" id="periodText"></div>
+        <div class="feedback" id="periodFeedback">Qui comparirà la correzione del periodo dopo la consegna.</div>
+        <div class="final-result" id="finalResult" style="display:none"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const labels = [
+      { key: 'soggetto', label: 'Soggetto' },
+      { key: 'oggetto', label: 'Complemento oggetto' },
+      { key: 'specificazione', label: 'Complemento di specificazione' },
+      { key: 'termine', label: 'Complemento di termine' },
+      { key: 'tempo', label: 'Complemento di tempo' },
+      { key: 'luogo', label: 'Complemento di luogo' },
+      { key: 'materia', label: 'Complemento di materia' }
+    ];
+
+    const periods = [
+      {
+        text: 'I ragazzi hanno consegnato il quaderno di matematica al professore questa mattina in classe.',
+        answers: {
+          soggetto: ['I ragazzi'],
+          oggetto: ['il quaderno'],
+          specificazione: ['di matematica'],
+          termine: ['al professore'],
+          tempo: ['questa mattina'],
+          luogo: ['in classe'],
+          materia: []
+        }
+      },
+      {
+        text: 'La statua di marmo si trova nel cortile della scuola da molti anni.',
+        answers: {
+          soggetto: ['La statua'],
+          oggetto: [],
+          specificazione: ['della scuola'],
+          termine: [],
+          tempo: ['da molti anni'],
+          luogo: ['nel cortile'],
+          materia: ['di marmo']
+        }
+      },
+      {
+        text: 'Marta ha regalato una collana d’argento alla nonna per il suo compleanno ieri sera.',
+        answers: {
+          soggetto: ['Marta'],
+          oggetto: ['una collana'],
+          specificazione: ['per il suo compleanno'],
+          termine: ['alla nonna'],
+          tempo: ['ieri sera'],
+          luogo: [],
+          materia: ['d’argento', "di argento"]
+        }
+      },
+      {
+        text: 'Gli amici di Luca aspettavano il treno alla stazione alle otto.',
+        answers: {
+          soggetto: ['Gli amici'],
+          oggetto: ['il treno'],
+          specificazione: ['di Luca'],
+          termine: [],
+          tempo: ['alle otto'],
+          luogo: ['alla stazione'],
+          materia: []
+        }
+      },
+      {
+        text: 'Il nonno racconta spesso storie della guerra ai nipoti durante la cena.',
+        answers: {
+          soggetto: ['Il nonno'],
+          oggetto: ['storie'],
+          specificazione: ['della guerra'],
+          termine: ['ai nipoti'],
+          tempo: ['durante la cena'],
+          luogo: [],
+          materia: []
+        }
+      },
+      {
+        text: 'Le chiavi della macchina sono rimaste sul tavolo in cucina per tutta la notte.',
+        answers: {
+          soggetto: ['Le chiavi'],
+          oggetto: [],
+          specificazione: ['della macchina'],
+          termine: [],
+          tempo: ['per tutta la notte'],
+          luogo: ['sul tavolo', 'in cucina'],
+          materia: []
+        }
+      },
+      {
+        text: 'Paolo scriverà una lettera di auguri a sua sorella da Roma domani.',
+        answers: {
+          soggetto: ['Paolo'],
+          oggetto: ['una lettera'],
+          specificazione: ['di auguri'],
+          termine: ['a sua sorella'],
+          tempo: ['domani'],
+          luogo: ['da Roma'],
+          materia: []
+        }
+      },
+      {
+        text: 'Il tavolo di legno occupa molto spazio nel soggiorno.',
+        answers: {
+          soggetto: ['Il tavolo'],
+          oggetto: ['molto spazio'],
+          specificazione: [],
+          termine: [],
+          tempo: [],
+          luogo: ['nel soggiorno'],
+          materia: ['di legno']
+        }
+      },
+      {
+        text: 'La maestra ha mostrato il disegno dei bambini ai genitori in aula ieri pomeriggio.',
+        answers: {
+          soggetto: ['La maestra'],
+          oggetto: ['il disegno'],
+          specificazione: ['dei bambini'],
+          termine: ['ai genitori'],
+          tempo: ['ieri pomeriggio'],
+          luogo: ['in aula'],
+          materia: []
+        }
+      },
+      {
+        text: 'Il bracciale d’oro della zia era nel cassetto della camera da letto.',
+        answers: {
+          soggetto: ['Il bracciale'],
+          oggetto: [],
+          specificazione: ['della zia', 'della camera da letto'],
+          termine: [],
+          tempo: [],
+          luogo: ['nel cassetto'],
+          materia: ['d’oro', 'di oro']
+        }
+      }
+    ];
+
+    const state = {
+      current: 0,
+      responses: periods.map(() => ({
+        soggetto: '', oggetto: '', specificazione: '', termine: '', tempo: '', luogo: '', materia: ''
+      })),
+      corrections: null,
+      score: 0,
+      total: periods.length * labels.length
+    };
+
+    const fieldsWrap = document.getElementById('fields');
+    const periodText = document.getElementById('periodText');
+    const periodIndex = document.getElementById('periodIndex');
+    const savedCount = document.getElementById('savedCount');
+    const summaryBox = document.getElementById('summaryBox');
+    const periodFeedback = document.getElementById('periodFeedback');
+    const finalResult = document.getElementById('finalResult');
+
+    const prevBtn = document.getElementById('prevBtn');
+    const saveNextBtn = document.getElementById('saveNextBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const finishBtn = document.getElementById('finishBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    function buildFields() {
+      fieldsWrap.innerHTML = '';
+      labels.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'field';
+        div.innerHTML = `
+          <label for="${item.key}">${item.label}</label>
+          <input id="${item.key}" data-key="${item.key}" type="text" autocomplete="off" />
+          <small>Lascia vuoto se il complemento non è presente.</small>
+        `;
+        fieldsWrap.appendChild(div);
+      });
+    }
+
+    function normalize(str) {
+      return (str || '')
+        .toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[’']/g, "'")
+        .replace(/[.,;:!?]/g, '')
+        .replace(/^\s*(il|lo|la|i|gli|le|un|uno|una)\s+/,'')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function splitMultiAnswer(value) {
+      if (!value) return [];
+      return value
+        .split(/\s*[,;]\s*/)
+        .map(v => v.trim())
+        .filter(Boolean);
+    }
+
+    function isEquivalent(userValue, acceptableValues) {
+      const userParts = splitMultiAnswer(userValue).map(normalize).filter(Boolean);
+      const goodParts = acceptableValues.map(normalize).filter(Boolean);
+
+      if (goodParts.length === 0) {
+        return userParts.length === 0 ? 'correct' : 'wrong';
+      }
+
+      if (userParts.length === 0) return 'wrong';
+
+      const matched = userParts.filter(up => goodParts.includes(up));
+
+      if (matched.length === goodParts.length && userParts.length === goodParts.length) return 'correct';
+      if (matched.length > 0) return 'partial';
+      return 'wrong';
+    }
+
+    function saveCurrentInputs() {
+      labels.forEach(item => {
+        state.responses[state.current][item.key] = document.getElementById(item.key).value.trim();
+      });
+    }
+
+    function loadCurrentPeriod() {
+      const p = periods[state.current];
+      periodText.textContent = p.text;
+      periodIndex.textContent = `Periodo ${state.current + 1} di ${periods.length}`;
+      summaryBox.innerHTML = `Periodo <strong>${state.current + 1}</strong> di <strong>${periods.length}</strong><br>Risposte salvate: <strong id="savedCountInline">${countCompleted()}</strong>`;
+
+      labels.forEach(item => {
+        document.getElementById(item.key).value = state.responses[state.current][item.key] || '';
+      });
+
+      prevBtn.disabled = state.current === 0;
+      saveNextBtn.textContent = state.current === periods.length - 1 ? 'Salva periodo' : 'Salva e vai al successivo ▶';
+
+      if (state.corrections) {
+        showPeriodFeedback();
+      } else {
+        periodFeedback.textContent = 'Qui comparirà la correzione del periodo dopo la consegna.';
+      }
+    }
+
+    function countCompleted() {
+      return state.responses.filter(r => Object.values(r).some(v => v.trim() !== '')).length;
+    }
+
+    function clearCurrentPeriod() {
+      labels.forEach(item => {
+        document.getElementById(item.key).value = '';
+      });
+      saveCurrentInputs();
+      loadCurrentPeriod();
+    }
+
+    function evaluate() {
+      saveCurrentInputs();
+      let score = 0;
+      const corrections = [];
+
+      periods.forEach((period, idx) => {
+        const row = {};
+        labels.forEach(item => {
+          const status = isEquivalent(state.responses[idx][item.key], period.answers[item.key]);
+          row[item.key] = status;
+          if (status === 'correct') score += 1;
+          if (status === 'partial') score += 0.5;
+        });
+        corrections.push(row);
+      });
+
+      state.score = score;
+      state.corrections = corrections;
+      showPeriodFeedback();
+      showFinalResult();
+      downloadBtn.disabled = false;
+    }
+
+    function statusLabel(status) {
+      if (status === 'correct') return '<span class="good">corretto</span>';
+      if (status === 'partial') return '<span class="partial">parzialmente corretto</span>';
+      return '<span class="bad">errato</span>';
+    }
+
+    function solutionText(values) {
+      return values.length ? values.join(' ; ') : '—';
+    }
+
+    function showPeriodFeedback() {
+      const p = periods[state.current];
+      const corr = state.corrections[state.current];
+      let html = '';
+
+      labels.forEach(item => {
+        html += `<strong>${item.label}</strong><br>`;
+        html += `Risposta studente: ${state.responses[state.current][item.key] || '—'}<br>`;
+        html += `Soluzione attesa: ${solutionText(p.answers[item.key])}<br>`;
+        html += `Esito: ${statusLabel(corr[item.key])}<br><br>`;
+      });
+
+      periodFeedback.innerHTML = html;
+    }
+
+    function showFinalResult() {
+      finalResult.style.display = 'block';
+      const rounded = Math.round((state.score / state.total) * 100);
+      finalResult.innerHTML = `
+        <strong>Risultato finale</strong><br>
+        Punteggio: <strong>${state.score}</strong> su <strong>${state.total}</strong><br>
+        Percentuale: <strong>${rounded}%</strong><br>
+        Criterio: 1 punto risposta corretta, 0.5 punti risposta parzialmente corretta.
+      `;
+    }
+
+    function nextPeriod() {
+      saveCurrentInputs();
+      if (state.current < periods.length - 1) {
+        state.current += 1;
+        loadCurrentPeriod();
+      } else {
+        loadCurrentPeriod();
+      }
+    }
+
+    function previousPeriod() {
+      saveCurrentInputs();
+      if (state.current > 0) {
+        state.current -= 1;
+        loadCurrentPeriod();
+      }
+    }
+
+    function generateTxt() {
+      const student = document.getElementById('studentName').value.trim() || 'Studente non indicato';
+      let txt = 'VERIFICA DI ANALISI LOGICA\n';
+      txt += '==========================\n\n';
+      txt += `Studente: ${student}\n`;
+      txt += `Punteggio: ${state.score} / ${state.total}\n`;
+      txt += `Percentuale: ${Math.round((state.score / state.total) * 100)}%\n\n`;
+
+      periods.forEach((period, idx) => {
+        txt += `Periodo ${idx + 1}: ${period.text}\n`;
+        labels.forEach(item => {
+          txt += `- ${item.label}\n`;
+          txt += `  Risposta studente: ${state.responses[idx][item.key] || '—'}\n`;
+          txt += `  Soluzione attesa: ${solutionText(period.answers[item.key])}\n`;
+          txt += `  Esito: ${state.corrections ? state.corrections[idx][item.key] : 'non corretto'}\n`;
+        });
+        txt += '\n';
+      });
+
+      const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `verifica_analisi_logica_${student.replace(/\s+/g, '_')}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    buildFields();
+    loadCurrentPeriod();
+
+    prevBtn.addEventListener('click', previousPeriod);
+    saveNextBtn.addEventListener('click', nextPeriod);
+    clearBtn.addEventListener('click', clearCurrentPeriod);
+    finishBtn.addEventListener('click', evaluate);
+    downloadBtn.addEventListener('click', generateTxt);
+  </script>
+</body>
+</html>
